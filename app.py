@@ -177,6 +177,7 @@ def update(id):
 def dashboard():
     form = UserForm()
     id = current_user.id
+    users_asperlogin=db.session.query(db.func.sum(Users.date_added)).group_by(Users.date_added)
     name_to_update = Users.query.get_or_404(id)
     if request.method == "POST":
         name_to_update.name = request.form['name']
@@ -219,6 +220,7 @@ def dashboard():
     else:
         return render_template("dashboard.html",
                                form=form,
+                               users_asperlogin=users_asperlogin,
                                name_to_update=name_to_update,
                                id=id)
 
