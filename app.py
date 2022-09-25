@@ -188,13 +188,15 @@ def name():
 def add_user():
     name = None
     form = UserForm()
+    form.role_name.choices = [(rol.role_id, rol.role_name) for rol in Role.query.all()]
+
     if form.validate_on_submit():
         user = Users.query.filter_by(email=form.email.data).first()
         if user is None:
             # Hash the password!!!
             hashed_pw = generate_password_hash(form.password_hash.data, "sha256")
             user = Users(username=form.username.data, name=form.name.data, email=form.email.data,
-                         favorite_color=form.favorite_color.data,roleId=form.role_name.data, password_hash=hashed_pw)
+                         favorite_color=form.favorite_color.data, role_id=form.role_name.data, password_hash=hashed_pw)
             db.session.add(user)
             db.session.commit()
         name = form.name.data
