@@ -7,6 +7,7 @@ from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 import uuid as uuid
 import os
+import json
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
@@ -22,163 +23,104 @@ login_manager.login_view = 'login'
 
 login_manager = LoginManager(app)
 
+
 @login_manager.user_loader
 def load_user(user_id):
     return Users.query.get(int(user_id))
-   # return User.query.filter_by(user_id=id).first()
-  #   return Users.query.get(int(user_id))
+
+
+# return User.query.filter_by(user_id=id).first()
+#   return Users.query.get(int(user_id))
 
 # Pass Stuff To Navbar
 @app.context_processor
 def base():
-	form = SearchForm()
-	return dict(form=form)
+    form = SearchForm()
+    return dict(form=form)
 
 
 @app.route('/base')
 def base():
     return render_template("navbar.html")
 
+
 # Create Login Page
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-	form = LoginForm()
-	if form.validate_on_submit():
-		user = Users.query.filter_by(username=form.username.data).first()
-		if user:
-			# Check the hash
-			if check_password_hash(user.password_hash, form.password.data):
-				login_user(user)
-				flash("Login Succesfull!!")
-				return redirect(url_for('dashboard'))
-			else:
-				flash("Wrong Password - Try Again!")
-		else:
-			flash("That User Doesn't Exist! Try Again...")
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = Users.query.filter_by(username=form.username.data).first()
+        if user:
+            # Check the hash
+            if check_password_hash(user.password_hash, form.password.data):
+                login_user(user)
+                flash("Login Succesfull!!")
+                return redirect(url_for('dashboard'))
+            else:
+                flash("Wrong Password - Try Again!")
+        else:
+            flash("That User Doesn't Exist! Try Again...")
 
+    return render_template('login.html', form=form)
 
-	return render_template('login.html', form=form)
 
 # Create Logout Page
 @app.route('/logout', methods=['GET', 'POST'])
 @login_required
 def logout():
-	logout_user()
-	flash("You Have Been Logged Out!  Thanks For Stopping By...")
-	return redirect(url_for('login'))
+    logout_user()
+    flash("You Have Been Logged Out!  Thanks For Stopping By...")
+    return redirect(url_for('login'))
+
 
 # Create Admin Page
 @app.route('/admin')
 @login_required
 def admin():
     id = current_user.id
-    if id == 1:
+    if id == 3:
         return render_template("admin.html")
     else:
         flash("Sorry you must be the Admin to access the Admin Page...")
         return redirect(url_for('dashboard'))
 
+
+@app.route('/users-list', methods=['GET', 'POST'])
+@login_required
+def users_list():
+    id = current_user.id
+    name = None
+    form = UserForm()
+    if id == 3:
+        our_users = Users.query.order_by(Users.date_added)
+        return render_template("users_list.html",
+                               our_users=our_users)
+    else:
+        flash("Sorry you must be the Admin to access the Admin Page...")
+        return redirect(url_for('dashboard'))
+
+
 # Create a route decorator
 @app.route('/')
 def index():
-	first_name = "John"
-	stuff = "This is bold text"
+    first_name = "John"
+    stuff = "This is bold text"
 
-	favorite_pizza = ["Pepperoni", "Cheese", "Mushrooms", 41]
-	return render_template("index.html",
-		first_name=first_name,
-		stuff=stuff,
-		favorite_pizza = favorite_pizza)
+    favorite_pizza = ["Pepperoni", "Cheese", "Mushrooms", 41]
+    return render_template("index.html",
+                           first_name=first_name,
+                           stuff=stuff,
+                           favorite_pizza=favorite_pizza)
+
 
 # localhost:5000/user/John
-@app.route('/user/<name>')
-
-def user(name):
-	return render_template("user.html", user_name=name)
-
-
-# Create Name Page
-@app.route('/name', methods=['GET', 'POST'])
-def name():
-    name = None
-    form = NamerForm()
-    # Validate Form
-    if form.validate_on_submit():
-        name = form.name.data
-        form.name.data = ''
-        flash("Form Submitted Successfully!")
-
-    return render_template("name.html",
-                           name=name,
-                           form=form)
-
-
-
-@app.route('/user/add', methods=['GET', 'POST'])
-def add_user():
-	name = None
-	form = UserForm()
-	if form.validate_on_submit():
-		user = Users.query.filter_by(email=form.email.data).first()
-		if user is None:
-			# Hash the password!!!
-			hashed_pw = generate_password_hash(form.password_hash.data, "sha256")
-			user = Users(username=form.username.data, name=form.name.data, email=form.email.data, favorite_color=form.favorite_color.data, password_hash=hashed_pw)
-			db.session.add(user)
-			db.session.commit()
-		name = form.name.data
-		form.name.data = ''
-		form.username.data = ''
-		form.email.data = ''
-		form.favorite_color.data = ''
-		form.password_hash.data = ''
-
-		flash("User Added Successfully!")
-	our_users = Users.query.order_by(Users.date_added)
-	return render_template("add_user.html",
-		form=form,
-		name=name,
-		our_users=our_users)
-
-# Update Database Record
-@app.route('/update/<int:id>', methods=['GET', 'POST'])
+@app.route('/user', methods=['GET', 'POST'])
 @login_required
-def update(id):
-	form = UserForm()
-	name_to_update = Users.query.get_or_404(id)
-	if request.method == "POST":
-		name_to_update.name = request.form['name']
-		name_to_update.email = request.form['email']
-		name_to_update.favorite_color = request.form['favorite_color']
-		name_to_update.username = request.form['username']
-		try:
-			db.session.commit()
-			flash("User Updated Successfully!")
-			return render_template("update.html",
-				form=form,
-				name_to_update = name_to_update, id=id)
-		except:
-			flash("Error!  Looks like there was a problem...try again!")
-			return render_template("update.html",
-				form=form,
-				name_to_update = name_to_update,
-				id=id)
-	else:
-		return render_template("update.html",
-				form=form,
-				name_to_update = name_to_update,
-				id = id)
-
-
-
-# Create Dashboard Page
-@app.route('/dashboard', methods=['GET', 'POST'])
-@login_required
-def dashboard():
+def user():
     form = UserForm()
     id = current_user.id
-    users_asperlogin=db.session.query(db.func.sum(Users.date_added)).group_by(Users.date_added)
     name_to_update = Users.query.get_or_404(id)
+    name = name_to_update
     if request.method == "POST":
         name_to_update.name = request.form['name']
         name_to_update.email = request.form['email']
@@ -203,28 +145,127 @@ def dashboard():
                 db.session.commit()
                 saver.save(os.path.join(app.config['UPLOAD_FOLDER'], pic_name))
                 flash("User Updated Successfully!")
-                return render_template("dashboard.html",
+                return render_template("user.html",
                                        form=form,
                                        name_to_update=name_to_update)
             except:
                 flash("Error!  Looks like there was a problem...try again!")
-                return render_template("dashboard.html",
+                return render_template("user.html",
                                        form=form,
                                        name_to_update=name_to_update)
         else:
             db.session.commit()
             flash("User Updated Successfully!")
-            return render_template("dashboard.html",
+            return render_template("user.html",
                                    form=form,
                                    name_to_update=name_to_update)
     else:
-        return render_template("dashboard.html",
+        return render_template("user.html",
                                form=form,
-                               users_asperlogin=users_asperlogin,
                                name_to_update=name_to_update,
                                id=id)
 
-    return render_template('dashboard.html')
+    return render_template('user.html', name=name)
+
+
+# Create Name Page
+@app.route('/name', methods=['GET', 'POST'])
+def name():
+    name = None
+    form = NamerForm()
+    # Validate Form
+    if form.validate_on_submit():
+        name = form.name.data
+        form.name.data = ''
+        flash("Form Submitted Successfully!")
+
+    return render_template("name.html",
+                           name=name,
+                           form=form)
+
+
+@app.route('/user/add', methods=['GET', 'POST'])
+def add_user():
+    name = None
+    form = UserForm()
+    if form.validate_on_submit():
+        user = Users.query.filter_by(email=form.email.data).first()
+        if user is None:
+            # Hash the password!!!
+            hashed_pw = generate_password_hash(form.password_hash.data, "sha256")
+            user = Users(username=form.username.data, name=form.name.data, email=form.email.data,
+                         favorite_color=form.favorite_color.data,roleId=form.role_name.data, password_hash=hashed_pw)
+            db.session.add(user)
+            db.session.commit()
+        name = form.name.data
+        form.name.data = ''
+        form.username.data = ''
+        form.email.data = ''
+        form.role_name.data = ''
+        form.favorite_color.data = ''
+        form.password_hash.data = ''
+
+        flash("User Added Successfully!")
+    our_users = Users.query.order_by(Users.date_added)
+    return render_template("add_user.html",
+                           form=form,
+                           name=name,
+                           our_users=our_users)
+
+
+# Update Database Record
+@app.route('/update/<int:id>', methods=['GET', 'POST'])
+@login_required
+def update(id):
+    form = UserForm()
+    name_to_update = Users.query.get_or_404(id)
+    if request.method == "POST":
+        name_to_update.name = request.form['name']
+        name_to_update.email = request.form['email']
+        name_to_update.favorite_color = request.form['favorite_color']
+        name_to_update.username = request.form['username']
+        try:
+            db.session.commit()
+            flash("User Updated Successfully!")
+            return render_template("update.html",
+                                   form=form,
+                                   name_to_update=name_to_update, id=id)
+        except:
+            flash("Error!  Looks like there was a problem...try again!")
+            return render_template("update.html",
+                                   form=form,
+                                   name_to_update=name_to_update,
+                                   id=id)
+    else:
+        return render_template("update.html",
+                               form=form,
+                               name_to_update=name_to_update,
+                               id=id)
+
+
+# Create Dashboard Page
+@app.route('/dashboard', methods=['GET', 'POST'])
+@login_required
+def dashboard():
+    form = UserForm()
+    id = current_user.id
+    users_asperlogin = db.session.query(Users.id, Users.name).order_by(Users.id).all()
+    dates = db.session.query(Users.name, Users.date_added).order_by(Users.date_added).all()
+
+    name_to_update = Users.query.get_or_404(id)
+
+    over_time_added_users = []
+    dates_label = []
+    for uname, date_added in dates:
+        dates_label.append(date_added.strftime("%m-%d-%y"))
+        over_time_added_users.append(uname)
+    return render_template("dashboard.html",
+                           form=form,
+                           over_time_added_users=json.dumps(over_time_added_users),
+                           dates_label=json.dumps(dates_label),
+                           users_asperlogin=json.dumps(users_asperlogin),
+                           name_to_update=name_to_update,
+                           id=id)
 
 
 # Create Model
@@ -237,11 +278,12 @@ class Users(db.Model, UserMixin):
     about_author = db.Column(db.Text(), nullable=True)
     date_added = db.Column(db.DateTime, default=datetime.utcnow)
     profile_pic = db.Column(db.String(), nullable=True)
-
+    role_id = db.Column(db.Integer, nullable=True, default=3)
     # Do some password stuff!
     password_hash = db.Column(db.String(128))
+
     # User Can Have Many Posts
-   # posts = db.relationship('Posts', backref='poster')
+    # posts = db.relationship('Posts', backref='poster')
 
     @property
     def password(self):
@@ -257,5 +299,10 @@ class Users(db.Model, UserMixin):
     # Create A String
     def __repr__(self):
         return '<Name %r>' % self.name
+
+
+class Role(db.Model, UserMixin):
+    role_id = db.Column(db.Integer,      primary_key=True)
+    role_name = db.Column(db.String(20), nullable=False, unique=True)
 # set FLASK_APP=db_table.py
 # python -m flask run

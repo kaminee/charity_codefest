@@ -37,6 +37,7 @@ class UserForm(FlaskForm):
     email = StringField("Email", validators=[DataRequired()])
     favorite_color = StringField("Favorite Color")
     about_author = TextAreaField("About Author")
+    role_name = StringField("Role Name", validators=[DataRequired()])
     password_hash = PasswordField('Password', validators=[DataRequired(),
                                                           EqualTo('password_hash2', message='Passwords Must Match!')])
     password_hash2 = PasswordField('Confirm Password', validators=[DataRequired()])

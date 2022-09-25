@@ -7,22 +7,28 @@
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
 
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('user', name='John')}}">User Profile</a>
-        </li>
+
 
         <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('name')}}">Name</a>
+          <a class="nav-link" href="{{ url_for('name')}}">About Us</a>
         </li>
 
         {% if current_user.is_authenticated %}
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('dashboard')}}">Dashboard</a>
           </li>
-
-          {% if current_user.id == 1 %}
+          <li class="nav-item">
+             <a class="nav-link" href="{{ url_for('user', name='John')}}">Profile</a>
+           </li>
+          {% if current_user.id == 3 %}
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('admin')}}">Admin</a>
+          </li>
+         <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('admin')}}">Reports</a>
+          </li>
+         <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('users_list')}}">Users List</a>
           </li>
           {% endif %}
 
@@ -42,7 +48,7 @@
         </li>
 
          <li class="nav-item">
-          <a class="nav-link" href="#">Posts</a>
+          <a class="nav-link" href="#">Engagement</a>
         </li>
 
 

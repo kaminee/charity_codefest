@@ -25,137 +25,85 @@
         </div>
     </div>
 </div>
-	<div class="card">
-  <div class="card-header">
-    {{ current_user.name }}
-  </div>
-  <div class="card-body">
-
-    <p class="card-text">
-
-<div class="container">
-	<div class="row">
-		<div class="col-8">
-
-    <strong>Name:</strong>
-	{{ current_user.name }}<br/>
-
-	<strong>Username:</strong>
-	{{ current_user.username }}<br/>
-
-	<strong>User Id:</strong>
-	{{ current_user.id }}<br/>
-
-	<strong>Email:</strong>
-	{{ current_user.email }}<br/>
-
-	<strong>Favorite Color:</strong>
-	{{ current_user.favorite_color }}<br/>
-
-	<strong>About Author:</strong>
-	{{ current_user.about_author }}<br/>
-
-	<strong>Profile Pic:</strong>
-	{{ current_user.profile_pic }}<br/>
-
-	<strong>Date Joined:</strong>
-	{{ current_user.date_added }}<br/>
-
-
-
-
-
-    </p>
-    <a href="{{ url_for('logout')}}" class="btn btn-secondary btn-sm">Logout</a>
-
-    <a href="{{ url_for('update', id=current_user.id)}}" class="btn btn-secondary btn-sm">Update Profile</a>
-
-    <a href="{{ url_for('update', id=current_user.id)}}" class="btn btn-danger btn-sm">Delete</a>
-    <br/><br/>
-
-
-	</div>
-	<div class="col-4">
-		{% if current_user.profile_pic %}
-
-		<img src="{{ url_for('static', filename='images/' + current_user.profile_pic)}}" width="200" align="right">
-
-		{% else %}
-
-		<img src="{{ url_for('static', filename='images/default_profile_pic.png')}}" width="200" align="right">
-
-		{% endif %}
-
-	</div>
-	</div>
-	</div>
-
-
-  </div>
+<div class="col-xs-10 col-sm-6 col-md-6">
+    <div class="card card-style mb-2">
+        <div class="card-body">
+            <div class="chart-container" style="position: relative;">
+                <canvas id="overtime_users"></canvas>
+            </div>
+        </div>
+    </div>
 </div>
+{% block javascript %}
+<script>
+console.log(users_asperlogin)
+    let income_vs_expense_data = JSON.parse({{ users_asperlogin | tojson }})
+
+    Chart.scaleService.updateScaleDefaults('linear', {
+            ticks: {
+                min: 0
+            }
+    });
 
 
+    let income_vs_expense_chart = new Chart(users_asperlogin, {
+            type: 'pie',
+            data: {
+            labels: ['Users', 'id'],
+                datasets: [{
+                    label: "Users Registered",
+                    data: income_vs_expense_data,
+                    backgroundColor: ['#5DA5DA ', '#FAA43A', '#60BD68',
+                        '#B276B2', '#E16851', '#FB8267'],
 
-<br/>
+                    borderWidth: 1,
+                    hoverBorderColor: "black",
+                    hoverBorderWidth: 2,
+                    hoverBackgroundColor: 'rgba(154, 245, 140)',
+                    pointHoverRadius: 5
+                }],
+            },
+            options: {
+                    title: {
+                        display: true,
+                            text: "Users",
+                                fontSize: 20,
+                    },
+                    legend: {
+                        position: "right",
+                            labels: {
+                            fontColor: "gray"
+                        },
+                        display: true,
+                    },
 
-<div class="card">
-  <div class="card-header">
-    Update Profile
-  </div>
-  <div class="card-body">
+                    elements: {
+                        hitRadius: 3,
+                    }
+            }
+        })
 
-  	<form action="/dashboard" method="POST" enctype="multipart/form-data">
-		{{ form.hidden_tag() }}
+         over_time_added_users = JSON.parse({{over_time_added_users | tojson}})
+        labels = JSON.parse({{ dates_label  | tojson}})
 
-		{{ form.name.label(class="form-label") }}
+        new Chart(document.getElementById("overtime_users"), {
+                type: "line",
+                data:
+                {
+                    labels: labels,
+                    datasets: [{
+                        label: "Users Over Time",
 
-		{{ form.name(class="form-control", value=name_to_update.name) }}
-		<br/>
-
-		{{ form.username.label(class="form-label") }}
-
-		{{ form.username(class="form-control", value=name_to_update.username) }}
-		<br/>
-
-		{{ form.email.label(class="form-label") }}
-
-		{{ form.email(class="form-control", value=name_to_update.email) }}
-		<br/>
-
-		{{ form.favorite_color.label(class="form-label") }}
-
-		{{ form.favorite_color(class="form-control", value=name_to_update.favorite_color) }}
-		<br/>
-
-		{{ form.about_author.label(class="form-label") }}
-
-		<textarea name="about_author" class="form-control">{{ name_to_update.about_author }}</textarea>
-		<br/>
-
-		{{ form.profile_pic.label(class="form-label") }}
-
-		{{ form.profile_pic(class="form-control", value=name_to_update.profile_pic) }}
-
-
-		<br/>
-
-		{{ form.submit(class="btn btn-secondary btn-sm") }}
-
-
-
-
-
-	</form>
-
-
-
-</div>
-
-
-
-
-
-</div>
+                        data: over_time_added_users,
+                        fill: false,
+                        borderColor: "rgb(75, 192, 192)",
+                        lineTension: 0.1
+                    }]
+                },
+                options: {}
+            });
+</script>
+{% endblock%}
 
 
 {% endblock %}
