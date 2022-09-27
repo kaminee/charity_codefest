@@ -232,8 +232,8 @@ def add_user():
         form.role_name.data = ''
         form.address.data = ''
         form.password_hash.data = ''
-        sender = 'matchlesscoder@gmail.com'
-        receivers = 'kamineedbalkawade@gmail.com'
+       # sender = 'matchlesscoder@gmail.com'
+       # receivers = 'kamineedbalkawade@gmail.com'
 
         message = """From: From Person <matchlesscoder@gmail.com>
         To: To Person <kamineedbalkawade@gmail.com>
@@ -242,21 +242,20 @@ def add_user():
          Welcome to  StartYoungUK Charity Club, Your request has been processed to the host.
          you will shortly get approval and then you will able to login to our club.
         """
-        print(message)
-        try:
-            host = 'smtp.gmail.com'
-            smtpObj = smtplib.SMTP(host, 587)
-            smtpObj.ehlo()
-            smtpObj.starttls()
-            smtpObj.ehlo()
-            smtpObj.login('matchlesscoder@gmail.com', 'matchless@2022')
-            smtpObj.sendmail(sender, receivers, message)
-            smtpObj.quit()
-            print("Successfully sent email")
-        except smtplib.SMTPException as s:
-            error_code = s.smtp_code
-            error_message = s.smtp_error
-            print("Error: unable to send email", error_code, error_message)
+       # print(message)
+      #  try:
+       #     host = 'smtp.gmail.com'
+       #     smtpObj = smtplib.SMTP(host, 587)
+       #     smtpObj.ehlo()
+       #     smtpObj.starttls()
+       #     smtpObj.ehlo()
+       #      smtpObj.sendmail(sender, receivers, message)
+       #     smtpObj.quit()
+      #      print("Successfully sent email")
+       # except smtplib.SMTPException as s:
+       #     error_code = s.smtp_code
+       #     error_message = s.smtp_error
+        #    print("Error: unable to send email", error_code, error_message)
         flash("User Added Successfully!")
     our_users = Users.query.order_by(Users.date_added)
     return render_template("add_user.html",
