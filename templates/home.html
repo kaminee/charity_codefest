@@ -41,8 +41,8 @@
 	<strong>Email:</strong>
 	{{ current_user.email }}<br/>
 
-	<strong>Favorite Color:</strong>
-	{{ current_user.favorite_color }}<br/>
+	<strong>Address:</strong>
+	{{ current_user.address }}<br/>
 
 	<strong>About Author:</strong>
 	{{ current_user.about_author }}<br/>
@@ -114,9 +114,9 @@
 		{{ form.email(class="form-control", value=name_to_update.email) }}
 		<br/>
 
-		{{ form.favorite_color.label(class="form-label") }}
+		{{ form.address.label(class="form-label") }}
 
-		{{ form.favorite_color(class="form-control", value=name_to_update.favorite_color) }}
+		{{ form.address(class="form-control", value=name_to_update.address) }}
 		<br/>
 
 		{{ form.about_author.label(class="form-label") }}

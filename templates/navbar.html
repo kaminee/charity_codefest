@@ -10,7 +10,7 @@
 
 
         <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('name')}}">About Us</a>
+          <a class="nav-link" href="{{ url_for('about_us')}}">About Us</a>
         </li>
 
         {% if current_user.is_authenticated %}
@@ -20,21 +20,25 @@
           <li class="nav-item">
              <a class="nav-link" href="{{ url_for('user', name='John')}}">Profile</a>
            </li>
-          {% if current_user.id == 3 %}
+          {% if current_user.role_id == 1 %}
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('admin')}}">Admin</a>
           </li>
          <li class="nav-item">
             <a class="nav-link" href="{{ url_for('admin')}}">Reports</a>
           </li>
-         <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('users_list')}}">Users List</a>
-          </li>
+
+          <div class="dropdown">
+             <button class="dropbtn">Users</button>
+             <div class="dropdown-content">
+
+               <a class="nav-link" href="{{ url_for('users_list')}}">Users List</a>
+                <a class="nav-link" href="{{ url_for('approvers_list')}}">Approvals</a>
+              </div>
+
           {% endif %}
 
-          <li class="nav-item">logout
-            <a class="nav-link" href="{{ url_for('logout')}}">Logout</a>
-          </li>
+
         {% else %}
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('add_user')}}">Register</a>
@@ -48,9 +52,13 @@
         </li>
 
          <li class="nav-item">
-          <a class="nav-link" href="#">Engagement</a>
+          <a class="nav-link" href="{{ url_for('engagement')}}">Engagement</a>
         </li>
-
+  {% if current_user.is_authenticated %}
+                 <li class="nav-item">logout
+            <a class="nav-link" href="{{ url_for('logout')}}">Logout</a>
+          </li>
+            {% endif %}
 
       </ul>
       <form method="POST"  class="d-flex">

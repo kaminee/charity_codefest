@@ -23,7 +23,8 @@
                     <th scope="col">username</th>
                     <th scope="col">Email</th>
                      <th scope="col">Address</th>
-                    <th scope="col">Delete</th>
+                    <th scope="col">Approve</th>
+                     <th scope="col">Reject</th>
                 </tr>
             </thead>
             <tbody>
@@ -35,7 +36,8 @@
                             <td>{{ our_user.username }}</td>
                             <td>{{ our_user.email }}</td>
                               <td>{{ our_user.address }}</td>
-                            <td><a href="#" class="btn btn-outline-danger btn-sm">Delete</a></td>
+                            <td><a href="{{ url_for('update_status', id=our_user.id, status ='approve')}}" class="btn btn-outline-danger btn-sm">Approve</a></td>
+                            <td><a href="{{ url_for('update_status', id=our_user.id, status ='reject')}}" class="btn btn-outline-danger btn-sm">Reject</a></td>
                         </tr>
                 {% endfor %}
         </tbody>

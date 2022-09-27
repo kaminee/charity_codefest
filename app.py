@@ -8,6 +8,7 @@ from flask_sqlalchemy import SQLAlchemy
 import uuid as uuid
 import os
 import json
+import smtplib
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
@@ -64,6 +65,14 @@ def login():
     return render_template('login.html', form=form)
 
 
+@app.route('/about_us')
+def about_us():
+    return render_template('about_us.html')
+
+@app.route('/engagement')
+def engagement():
+    return render_template('engagement.html')
+
 # Create Logout Page
 @app.route('/logout', methods=['GET', 'POST'])
 @login_required
@@ -78,7 +87,8 @@ def logout():
 @login_required
 def admin():
     id = current_user.id
-    if id == 3:
+    role_id = Users.query.filter_by(id=id).first()
+    if role_id == 1:
         return render_template("admin.html")
     else:
         flash("Sorry you must be the Admin to access the Admin Page...")
@@ -88,12 +98,28 @@ def admin():
 @app.route('/users-list', methods=['GET', 'POST'])
 @login_required
 def users_list():
-    id = current_user.id
+    id = current_user.role_id
     name = None
     form = UserForm()
-    if id == 3:
-        our_users = Users.query.order_by(Users.date_added)
+    if id == 1:
+        our_users = Users.query.filter_by(status='approve').order_by(Users.date_added)
         return render_template("users_list.html",
+                               our_users=our_users)
+    else:
+        flash("Sorry you must be the Admin to access the Admin Page...")
+        return redirect(url_for('dashboard'))
+
+
+@app.route('/approvers-list', methods=['GET', 'POST'])
+@login_required
+def approvers_list():
+    id = current_user.role_id
+    name = None
+    form = UserForm()
+    if id == 1:
+        our_users = Users.query.filter_by(status='pending').order_by(Users.date_added)
+        print("our users ", our_users)
+        return render_template("approvers_list.html",
                                our_users=our_users)
     else:
         flash("Sorry you must be the Admin to access the Admin Page...")
@@ -124,7 +150,7 @@ def user():
     if request.method == "POST":
         name_to_update.name = request.form['name']
         name_to_update.email = request.form['email']
-        name_to_update.favorite_color = request.form['favorite_color']
+        name_to_update.address = request.form['address']
         name_to_update.username = request.form['username']
         name_to_update.about_author = request.form['about_author']
 
@@ -196,7 +222,7 @@ def add_user():
             # Hash the password!!!
             hashed_pw = generate_password_hash(form.password_hash.data, "sha256")
             user = Users(username=form.username.data, name=form.name.data, email=form.email.data,
-                         favorite_color=form.favorite_color.data, role_id=form.role_name.data, password_hash=hashed_pw)
+                         address=form.address.data, role_id=form.role_name.data, password_hash=hashed_pw)
             db.session.add(user)
             db.session.commit()
         name = form.name.data
@@ -204,15 +230,64 @@ def add_user():
         form.username.data = ''
         form.email.data = ''
         form.role_name.data = ''
-        form.favorite_color.data = ''
+        form.address.data = ''
         form.password_hash.data = ''
+        sender = 'matchlesscoder@gmail.com'
+        receivers = 'kamineedbalkawade@gmail.com'
 
+        message = """From: From Person <matchlesscoder@gmail.com>
+        To: To Person <kamineedbalkawade@gmail.com>
+        Subject: Welcome To StartYoungUK Charity Club
+        Dear User,
+         Welcome to  StartYoungUK Charity Club, Your request has been processed to the host.
+         you will shortly get approval and then you will able to login to our club.
+        """
+        print(message)
+        try:
+            host = 'smtp.gmail.com'
+            smtpObj = smtplib.SMTP(host, 587)
+            smtpObj.ehlo()
+            smtpObj.starttls()
+            smtpObj.ehlo()
+            smtpObj.login('matchlesscoder@gmail.com', 'matchless@2022')
+            smtpObj.sendmail(sender, receivers, message)
+            smtpObj.quit()
+            print("Successfully sent email")
+        except smtplib.SMTPException as s:
+            error_code = s.smtp_code
+            error_message = s.smtp_error
+            print("Error: unable to send email", error_code, error_message)
         flash("User Added Successfully!")
     our_users = Users.query.order_by(Users.date_added)
     return render_template("add_user.html",
                            form=form,
                            name=name,
                            our_users=our_users)
+
+
+# Update Database Record
+@app.route('/update_status/<int:id>/<status>', methods=['GET', 'POST'])
+@login_required
+def update_status(id, status):
+    print(id)
+    print(status)
+    form = UserForm()
+    name_to_update = Users.query.get_or_404(id)
+
+    name_to_update.status = status
+
+    try:
+        print(name_to_update.status)
+        db.session.merge(name_to_update)
+        db.session.flush()
+        db.session.commit()
+        our_users = Users.query.filter_by(status='approve').order_by(Users.date_added)
+        return render_template("users_list.html")
+    except:
+        flash("Error!  Looks like there was a problem...try again!")
+        our_users = Users.query.filter_by(status='approve').order_by(Users.date_added)
+        return render_template("users_list.html",
+                               our_users=our_users)
 
 
 # Update Database Record
@@ -224,7 +299,7 @@ def update(id):
     if request.method == "POST":
         name_to_update.name = request.form['name']
         name_to_update.email = request.form['email']
-        name_to_update.favorite_color = request.form['favorite_color']
+        name_to_update.address = request.form['address']
         name_to_update.username = request.form['username']
         try:
             db.session.commit()
@@ -276,11 +351,12 @@ class Users(db.Model, UserMixin):
     username = db.Column(db.String(20), nullable=False, unique=True)
     name = db.Column(db.String(200), nullable=False)
     email = db.Column(db.String(120), nullable=False, unique=True)
-    favorite_color = db.Column(db.String(120))
+    address = db.Column(db.String(120))
     about_author = db.Column(db.Text(), nullable=True)
     date_added = db.Column(db.DateTime, default=datetime.utcnow)
     profile_pic = db.Column(db.String(), nullable=True)
     role_id = db.Column(db.Integer, nullable=True, default=3)
+    status = db.Column(db.String(), nullable=True, default='pending')
     # Do some password stuff!
     password_hash = db.Column(db.String(128))
 
@@ -304,7 +380,7 @@ class Users(db.Model, UserMixin):
 
 
 class Role(db.Model, UserMixin):
-    role_id = db.Column(db.Integer,      primary_key=True)
+    role_id = db.Column(db.Integer, primary_key=True)
     role_name = db.Column(db.String(20), nullable=False, unique=True)
 # set FLASK_APP=db_table.py
 # python -m flask run
